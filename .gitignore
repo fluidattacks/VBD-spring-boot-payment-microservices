@@ -79,3 +79,8 @@ buildNumber.properties
 # JVM Crash Logs
 ############################
 hs_err_pid
+
+#
+# Security: Ignore all private and public key files
+#
+*.pem
