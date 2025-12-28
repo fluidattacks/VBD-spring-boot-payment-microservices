@@ -1,6 +1,6 @@
 # Spring Boot Payment Microservices System
 
-A production-style, multi-service payment processing system built with **Java 17** and **Spring Boot 3**, designed to simulate a real-world e-commerce payment flow with third‑party provider integration.
+A production-style, multi-service payment processing system built with **Java 21** and **Spring Boot 3**, designed to simulate a real-world e-commerce payment flow with third‑party provider integration.
 
 The project demonstrates **microservices architecture**, **secure communication**, **event-driven messaging**, and **containerized infrastructure**, making it suitable for backend engineering portfolios and system design discussions.
 
@@ -82,7 +82,7 @@ Responsibilities:
 
 ### Backend
 
-* Java 17
+* Java 21
 * Spring Boot 3
 * Spring Web, Spring Data JPA
 
@@ -111,7 +111,7 @@ Responsibilities:
 
 ### Prerequisites
 
-* Java 17+
+* Java 21+
 * Docker Desktop
 * IntelliJ IDEA / STS
 * Postman
