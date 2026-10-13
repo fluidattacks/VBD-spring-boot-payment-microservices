@@ -16,22 +16,17 @@ import org.springframework.web.util.ContentCachingRequestWrapper;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 /**
  * A Spring Security Filter that intercepts incoming requests to validate the HMAC signature.
  * This ensures that only trusted clients possessing the shared secret key can communicate with our public API.
  * It checks for the 'X-Client-Signature' header and verifies its authenticity against the request body.
- * It also includes logic to bypass this check for specific, non-sensitive administrative endpoints.
  */
 @Component
 public class HmacFilter extends OncePerRequestFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(HmacFilter.class);
     private static final String HMAC_HEADER = "X-Client-Signature";
-
-    // A list of paths that should not be subjected to HMAC validation.
-    private static final List<String> EXCLUDED_PATHS = List.of("/api/validate/rules/refresh");
 
     @Autowired
     private HmacUtil hmacUtil;
@@ -43,15 +38,6 @@ public class HmacFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        // First, check if the request path is in our exclusion list.
-        // This is done before any other processing to efficiently bypass security for known endpoints.
-        if (EXCLUDED_PATHS.contains(request.getRequestURI())) {
-            logger.debug("Skipping HMAC validation for excluded administrative endpoint: {}", request.getRequestURI());
-            filterChain.doFilter(request, response); // Pass the original request straight to the controller.
-            return; // And stop the filter's execution here.
-        }
-
-        // For all other requests, we proceed with HMAC validation.
         // We wrap the request to allow its body to be read multiple times (once here, once in the controller).
         ContentCachingRequestWrapper requestWrapper = new ContentCachingRequestWrapper(request);
 
