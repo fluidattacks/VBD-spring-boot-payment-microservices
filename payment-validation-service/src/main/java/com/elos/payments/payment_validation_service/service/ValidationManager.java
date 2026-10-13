@@ -21,14 +21,20 @@ public class ValidationManager {
     private RedisTemplate<String, String> redisTemplate;
     @Autowired
     private ApplicationContext context; // The Spring context, used to get beans by name.
+    @Autowired
+    private CacheInitializer cacheInitializer;
 
     public void executeValidations(PaymentRequestDTO paymentRequest) {
         // Get the list of active rule names from the Redis cache.
         List<String> activeRuleNames = redisTemplate.opsForList().range(CacheInitializer.ACTIVE_RULES_KEY, 0, -1);
 
         if (activeRuleNames == null || activeRuleNames.isEmpty()) {
-            logger.warn("No validation rules are active in the cache. Skipping validation.");
-            return;
+            logger.warn("No validation rules found in the cache. Reloading them from the database.");
+            cacheInitializer.refreshCache();
+            activeRuleNames = redisTemplate.opsForList().range(CacheInitializer.ACTIVE_RULES_KEY, 0, -1);
+        }
+        if (activeRuleNames == null || activeRuleNames.isEmpty()) {
+            throw new IllegalStateException("No validation rules are available; refusing to validate the payment.");
         }
 
         logger.info("Executing active validation rules: {}", activeRuleNames);

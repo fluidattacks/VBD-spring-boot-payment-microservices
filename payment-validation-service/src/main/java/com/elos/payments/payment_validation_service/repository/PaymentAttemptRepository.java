@@ -8,6 +8,5 @@ import java.time.LocalDateTime;
 
 public interface PaymentAttemptRepository extends JpaRepository<PaymentAttempt, Long> {
 
-    // "SELECT COUNT(*) FROM payment_attempt WHERE email = ? AND created_date > ?"
-    int countByEmailAndCreatedDateAfter(String email, LocalDateTime after);
+    int countByClientAddressAndCreatedDateAfter(String clientAddress, LocalDateTime after);
 }

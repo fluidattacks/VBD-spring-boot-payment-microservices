@@ -65,9 +65,6 @@ public class PaymentValidationController {
     /**
      * Handles a new payment initiation request.
      * The flow is:
-     * 1. Parse the request body (which was cached by the HmacFilter).
-     * 2. Run all active business rules (loaded from Redis) BEFORE saving.
-     * 3. If validation passes, log the payment attempt for auditing in its own transaction.
      * 4. Sign the request and forward it to the core processing service.
      */
     @PostMapping(value = "/payment", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -77,15 +74,13 @@ public class PaymentValidationController {
             ContentCachingRequestWrapper requestWrapper = (ContentCachingRequestWrapper) request;
             String requestBody = new String(requestWrapper.getContentAsByteArray(), StandardCharsets.UTF_8);
             PaymentRequestDTO paymentRequest = objectMapper.readValue(requestBody, PaymentRequestDTO.class);
+            paymentRequest.setClientAddress(request.getRemoteAddr());
             log.info("Received new payment validation request for user: {}", paymentRequest.getUser().getEmail());
 
-            // 2. Execute Business Validations FIRST.
+            recordAttempt(paymentRequest);
+
             validationManager.executeValidations(paymentRequest);
             log.info("Business validations passed for user: {}", paymentRequest.getUser().getEmail());
-
-            // 3. Record the Attempt SECOND, in its own short-lived transaction.
-            // This prevents holding a database lock during the long network call.
-            recordAttempt(paymentRequest);
 
             // 4. Securely Forward to Processing Service
             PrivateKey merchantPrivateKey = rsaUtil.loadPrivateKey("merchant_private_key.pem");
@@ -141,6 +136,7 @@ public class PaymentValidationController {
     private void recordAttempt(PaymentRequestDTO paymentRequest) {
         PaymentAttempt attempt = new PaymentAttempt();
         attempt.setEmail(paymentRequest.getUser().getEmail());
+        attempt.setClientAddress(paymentRequest.getClientAddress());
         attemptRepository.save(attempt);
         log.info("Successfully recorded payment attempt for user: {}", paymentRequest.getUser().getEmail());
     }

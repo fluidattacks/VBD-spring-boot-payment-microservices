@@ -22,11 +22,14 @@ public class ThresholdValidator implements Validator {
 
     @Override
     public void validate(PaymentRequestDTO paymentRequest) {
-        String email = paymentRequest.getUser().getEmail();
+        String clientAddress = paymentRequest.getClientAddress();
+        if (clientAddress == null || clientAddress.isBlank()) {
+            throw new IllegalStateException("Client address missing; cannot apply the attempt threshold.");
+        }
         LocalDateTime since = LocalDateTime.now().minusHours(thresholdHours);
-        int recentAttempts = repository.countByEmailAndCreatedDateAfter(email, since);
+        int recentAttempts = repository.countByClientAddressAndCreatedDateAfter(clientAddress, since);
 
-        if (recentAttempts >= thresholdAttempts) {
+        if (recentAttempts > thresholdAttempts) {
             throw new ThresholdExceededException("Payment attempt limit exceeded.");
         }
     }

@@ -17,5 +17,6 @@ public class PaymentAttempt {
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Tells the database to auto-generate this value.
     private Long id;
     private String email;
+    private String clientAddress;
     private LocalDateTime createdDate = LocalDateTime.now();
 }
