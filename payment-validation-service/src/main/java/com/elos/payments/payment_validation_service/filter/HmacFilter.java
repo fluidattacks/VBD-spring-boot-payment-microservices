@@ -16,6 +16,7 @@ import org.springframework.web.util.ContentCachingRequestWrapper;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 /**
  * A Spring Security Filter that intercepts incoming requests to validate the HMAC signature.
@@ -27,6 +28,7 @@ public class HmacFilter extends OncePerRequestFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(HmacFilter.class);
     private static final String HMAC_HEADER = "X-Client-Signature";
+    private static final List<String> INTERNAL_ROUTES = List.of("/api/validate");
 
     @Autowired
     private HmacUtil hmacUtil;
@@ -37,6 +39,13 @@ public class HmacFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+
+        // Internal routes are invoked by the rules scheduler, which does not sign its calls.
+        if (INTERNAL_ROUTES.stream().anyMatch(route -> request.getRequestURI().startsWith(route))) {
+            logger.debug("Skipping signature check for internal route {}", request.getRequestURI());
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         // We wrap the request to allow its body to be read multiple times (once here, once in the controller).
         ContentCachingRequestWrapper requestWrapper = new ContentCachingRequestWrapper(request);
