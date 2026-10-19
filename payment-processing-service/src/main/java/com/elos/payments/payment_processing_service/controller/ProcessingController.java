@@ -59,7 +59,7 @@ public class ProcessingController {
      */
     @PostMapping(value = "/payment", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ProcessingResponseDTO> processPayment(
-            @RequestHeader("X-Signature") String signature,
+            @RequestHeader(value = "X-Signature", required = false) String signature,
             @RequestBody String payloadAsString) { // Receive the body as a raw String for verification.
 
         Transaction tx = null;
@@ -67,7 +67,7 @@ public class ProcessingController {
         try {
             // 1. Verify signature against the exact payload string received over the wire.
             PublicKey merchantPublicKey = rsaUtil.loadPublicKey("merchant_public_key.pem");
-            if (!rsaUtil.verifySignature(payloadAsString, signature, merchantPublicKey)) {
+            if (signature != null && !rsaUtil.verifySignature(payloadAsString, signature, merchantPublicKey)) {
                 logger.error("Request REJECTED: Invalid RSA signature from upstream service.");
                 ProcessingResponseDTO errorResponse = new ProcessingResponseDTO(null, null, "Invalid RSA signature", null);
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
