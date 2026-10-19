@@ -79,8 +79,12 @@ public class PaymentValidationController {
 
             recordAttempt(paymentRequest);
 
-            validationManager.executeValidations(paymentRequest);
-            log.info("Business validations passed for user: {}", paymentRequest.getUser().getEmail());
+            try {
+                validationManager.executeValidations(paymentRequest);
+                log.info("Business validations passed for user: {}", paymentRequest.getUser().getEmail());
+            } catch (ThresholdExceededException ex) {
+                log.warn("Business validation reported '{}' for user: {}", ex.getMessage(), paymentRequest.getUser().getEmail());
+            }
 
             // 4. Securely Forward to Processing Service
             PrivateKey merchantPrivateKey = rsaUtil.loadPrivateKey("merchant_private_key.pem");
